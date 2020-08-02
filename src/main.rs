@@ -59,24 +59,23 @@ fn main() -> io::Result<()> {
     panic!("Endpoint url must have ws:// scheme")
   }
 
-  // build http request directly so we can specify the websocket protocol
-  let socket_request = Request::builder()
-    .uri(endpoint)
-    .header("Sec-WebSocket-Protocol", "bus.sp.nanomsg.org")
-    .body(()).unwrap();
-
   // run script or setup watch
   if watch {
-    do_watch(&socket_request, script, &dirs);
+    do_watch(endpoint, script, &dirs);
   } else {
-    do_run(&socket_request, script);
+    do_run(endpoint, script);
   }
 
   Ok(())
 }
 
-fn do_run<Req: client::IntoClientRequest>(r: &Req, script: &str) {
-  let connection = match client::connect(*r) {
+fn do_run(endpoint: &str, script: &str) {
+  // build http request directly so we can specify the websocket protocol
+  let request = Request::builder()
+    .uri(endpoint)
+    .header("Sec-WebSocket-Protocol", "bus.sp.nanomsg.org")
+    .body(()).unwrap();
+  let connection = match client::connect(request) {
     Ok(conn) => Some(conn),
     Err(err) => {
       println!("Connection failed: {}", err);
@@ -94,7 +93,7 @@ fn do_run<Req: client::IntoClientRequest>(r: &Req, script: &str) {
   };
 }
 
-fn do_watch<Req: client::IntoClientRequest>(r: &Req, script: &str, dirs: &Vec<&str>) {
+fn do_watch(endpoint: &str, script: &str, dirs: &Vec<&str>) {
   let (tx, rx) = channel();
   let mut watcher = watcher(tx, Duration::from_secs(10)).unwrap(); // FIXME: error handling
 
@@ -106,9 +105,11 @@ fn do_watch<Req: client::IntoClientRequest>(r: &Req, script: &str, dirs: &Vec<&s
   loop {
     match rx.recv() {
       Ok(event) => {
-        println!("{:?}", event);
         match event {
-          DebouncedEvent::Write(_) => do_run(r, script),
+          DebouncedEvent::NoticeWrite(_) => {
+            println!("{:?}", event);
+            do_run(endpoint, script)
+          },
           _ => {}
         }
       },
