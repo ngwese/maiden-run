@@ -5,10 +5,14 @@ authors = ["Greg Wuller <greg@afofo.com>"]
 edition = "2018"
 
 [dependencies]
-clap = "2.33.1"
 http = "0.2.1"
 notify = "4.0.15"
 url = "2.1.1"
+
+[dependencies.clap]
+version = "2.33.1"
+default-features = false
+features = ["cargo"]
 
 [dependencies.tungstenite]
 version = "0.11.0"
