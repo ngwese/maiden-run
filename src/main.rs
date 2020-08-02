@@ -4,10 +4,11 @@ use clap::{Arg, App, Values};
 
 use url::Url;
 use http::Request;
-
 use tungstenite::{client, Message};
 
-// use std::{thread, time};
+use notify::{Watcher, RecursiveMode, DebouncedEvent, watcher};
+use std::sync::mpsc::channel;
+use std::time::Duration;
 
 fn main() -> io::Result<()> {
   let matches = App::new("maiden-run")
@@ -65,17 +66,17 @@ fn main() -> io::Result<()> {
     .body(()).unwrap();
 
   // run script or setup watch
-  if !watch {
-    run(socket_request, script);
-
-    // thread::sleep(time::Duration::from_secs(5));
+  if watch {
+    do_watch(&socket_request, script, &dirs);
+  } else {
+    do_run(&socket_request, script);
   }
 
   Ok(())
 }
 
-fn run<Req: client::IntoClientRequest>(r: Req, script: &str) {
-  let connection = match client::connect(r) {
+fn do_run<Req: client::IntoClientRequest>(r: &Req, script: &str) {
+  let connection = match client::connect(*r) {
     Ok(conn) => Some(conn),
     Err(err) => {
       println!("Connection failed: {}", err);
@@ -85,9 +86,33 @@ fn run<Req: client::IntoClientRequest>(r: Req, script: &str) {
 
   if let Some((mut s, _)) = connection {
     let code = format!("norns.script.load(\"{}\")\n\0", script);
+    println!("Sending: {}", code);
     match s.write_message(Message::Text(code)) {
       Ok(_) => {},
       Err(e) => { println!("Writing to socket failed: {}", e) },
     }
   };
+}
+
+fn do_watch<Req: client::IntoClientRequest>(r: &Req, script: &str, dirs: &Vec<&str>) {
+  let (tx, rx) = channel();
+  let mut watcher = watcher(tx, Duration::from_secs(10)).unwrap(); // FIXME: error handling
+
+  watcher.watch(script, RecursiveMode::NonRecursive).unwrap();
+  for dir in dirs {
+    watcher.watch(dir, RecursiveMode::Recursive).unwrap(); // FIXME: error handling
+  }
+
+  loop {
+    match rx.recv() {
+      Ok(event) => {
+        println!("{:?}", event);
+        match event {
+          DebouncedEvent::Write(_) => do_run(r, script),
+          _ => {}
+        }
+      },
+      Err(e) => println!("watch error: {:?}", e),
+    }
+  }
 }

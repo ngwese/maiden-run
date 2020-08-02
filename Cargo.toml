@@ -9,4 +9,8 @@ clap = "2.33.1"
 http = "0.2.1"
 notify = "4.0.15"
 url = "2.1.1"
-tungstenite = "0.11.0"
+
+[dependencies.tungstenite]
+version = "0.11.0"
+default-features = false  # don't compile with tls support
+features = []
