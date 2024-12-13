@@ -95,7 +95,7 @@ fn do_run(endpoint: &str, script: &str) {
 
 fn do_watch(endpoint: &str, script: &str, dirs: &Vec<&str>) {
   let (tx, rx) = channel();
-  let mut watcher = watcher(tx, Duration::from_secs(10)).unwrap(); // FIXME: error handling
+  let mut watcher = watcher(tx, Duration::from_secs(1)).unwrap(); // FIXME: error handling
 
   watcher.watch(script, RecursiveMode::NonRecursive).unwrap();
   for dir in dirs {
@@ -106,7 +106,7 @@ fn do_watch(endpoint: &str, script: &str, dirs: &Vec<&str>) {
     match rx.recv() {
       Ok(event) => {
         match event {
-          DebouncedEvent::NoticeWrite(_) => {
+          DebouncedEvent::Write(_) => {
             println!("{:?}", event);
             do_run(endpoint, script)
           },
