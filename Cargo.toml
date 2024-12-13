@@ -1,11 +1,11 @@
 [package]
 name = "maiden-run"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Greg Wuller <greg@afofo.com>"]
 edition = "2018"
 
 [dependencies]
-clap = "2.33.1"
+clap = "4.5.23"
 http = "1.2.0"
 notify = "7.0.0"
 url = "2.1.1"

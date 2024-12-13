@@ -2,7 +2,8 @@ use std::sync::mpsc::channel;
 use std::time::Duration;
 use std::path::Path;
 
-use clap::{App, Arg, Values};
+use clap::{Arg, Command};
+use clap::parser::ValuesRef;
 
 use http::Request;
 use tungstenite::{connect, Message};
@@ -11,52 +12,52 @@ use url::Url;
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher, EventKind};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let matches = App::new("maiden-run")
+    let matches = Command::new(env!("CARGO_CRATE_NAME")) //App::new("maiden-run")
         .about("run a script immediately or when files change")
-        .version("0.1.0")
+        .version(env!("CARGO_PKG_VERSION"))
         .arg(
-            Arg::with_name("endpoint")
+            Arg::new("endpoint")
                 .help("matron socket")
-                .short("e")
+                .short('e')
                 .long("endpoint")
                 .value_name("URL")
                 .default_value("ws://localhost:5555/")
-                .takes_value(true),
+                // .takes_value(true),
         )
         .arg(
-            Arg::with_name("watch")
+            Arg::new("watch")
                 .help("auto run on script/dir changes")
-                .short("w")
+                .short('w')
                 .long("watch")
-                .takes_value(false),
+                // .takes_value(false),
         )
         .arg(
-            Arg::with_name("script")
+            Arg::new("script")
                 .help("script file to play")
                 .required(true)
                 .index(1),
         )
         .arg(
-            Arg::with_name("dirs")
+            Arg::new("dirs")
                 .help("directories to watch")
                 .index(2)
-                .multiple(true),
+                .num_args(1..),
         )
         .get_matches();
 
     // collect up arguments
-    let endpoint = matches.value_of("endpoint").unwrap();
+    let endpoint = matches.get_one::<&str>("endpoint").unwrap();
     println!("endpoint: {}", endpoint);
 
-    let watch = matches.is_present("watch");
+    let watch = matches.contains_id("watch");
     println!("watch: {}", watch);
 
-    let script = matches.value_of("script").unwrap();
+    let script = matches.get_one::<&str>("script").unwrap();
     println!("script: {}", script);
 
-    let dirs: Vec<&str> = matches
-        .values_of("dirs")
-        .unwrap_or(Values::default())
+    let dirs = matches
+        .get_many("dirs")
+        .unwrap_or(ValuesRef::default())
         .collect();
     println!("dirs: {:?}", dirs);
 
