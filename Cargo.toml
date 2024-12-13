@@ -5,16 +5,8 @@ authors = ["Greg Wuller <greg@afofo.com>"]
 edition = "2018"
 
 [dependencies]
-http = "0.2.1"
-notify = "4.0.15"
+clap = "2.33.1"
+http = "1.2.0"
+notify = "7.0.0"
 url = "2.1.1"
-
-[dependencies.clap]
-version = "2.33.1"
-default-features = false
-features = []
-
-[dependencies.tungstenite]
-version = "0.11.0"
-default-features = false  # don't compile with tls support
-features = []
+tungstenite = "0.24.0"
