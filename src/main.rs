@@ -46,13 +46,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .get_matches();
 
     // collect up arguments
-    let endpoint = matches.get_one::<&str>("endpoint").unwrap();
+    let endpoint = matches.get_one::<String>("endpoint").unwrap();
     println!("endpoint: {}", endpoint);
 
     let watch = matches.contains_id("watch");
     println!("watch: {}", watch);
 
-    let script = matches.get_one::<&str>("script").unwrap();
+    let script = matches.get_one::<String>("script").unwrap();
     println!("script: {}", script);
 
     let dirs = matches
